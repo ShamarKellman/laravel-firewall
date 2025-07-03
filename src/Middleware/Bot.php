@@ -4,15 +4,13 @@ namespace Akaunting\Firewall\Middleware;
 
 use Akaunting\Firewall\Abstracts\Middleware;
 use Akaunting\Firewall\Events\AttackDetected;
-use Jenssegers\Agent\Agent;
+use hisorange\BrowserDetect\Facade as Browser;
 
 class Bot extends Middleware
 {
     public function check($patterns)
     {
-        $agent = new Agent();
-
-        if (! $agent->isRobot()) {
+        if (! Browser::isBot()) {
             return false;
         }
 
@@ -20,15 +18,10 @@ class Bot extends Middleware
             return false;
         }
 
-        $status = false;
-
-        if (! empty($crawlers['allow']) && ! in_array((string) $agent->robot(), (array) $crawlers['allow'])) {
-            $status = true;
-        }
-
-        if (in_array((string) $agent->robot(), (array) $crawlers['block'])) {
-            $status = true;
-        }
+        // If crawlers are configured, block all bots
+        // Note: hisorange/browser-detect doesn't provide bot names,
+        // so we can't filter by specific bot names like the original jenssegers/agent
+        $status = true;
 
         if ($status) {
             $log = $this->log();

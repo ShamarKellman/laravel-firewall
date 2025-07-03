@@ -4,17 +4,13 @@ namespace Akaunting\Firewall\Middleware;
 
 use Akaunting\Firewall\Abstracts\Middleware;
 use Akaunting\Firewall\Events\AttackDetected;
-use Jenssegers\Agent\Agent as Parser;
+use hisorange\BrowserDetect\Facade as Browser;
 
 class Agent extends Middleware
 {
-    protected $parser;
-
     public function check($patterns)
     {
         $status = false;
-
-        $this->parser = new Parser();
 
         if ($this->isMalicious()) {
             $status = true;
@@ -32,10 +28,6 @@ class Agent extends Middleware
             $status = true;
         }
 
-        if (! $status && $this->isProperty()) {
-            $status = true;
-        }
-
         if ($status) {
             $log = $this->log();
 
@@ -47,7 +39,7 @@ class Agent extends Middleware
 
     protected function isMalicious()
     {
-        $agent = $this->parser->getUserAgent();
+        $agent = Browser::userAgent();
 
         if (empty($agent) || ($agent == '-') || strstr($agent, '<?')) {
             return true;
@@ -76,11 +68,13 @@ class Agent extends Middleware
             return false;
         }
 
-        if (! empty($browsers['allow']) && ! in_array((string) $this->parser->browser(), (array) $browsers['allow'])) {
+        $browserName = Browser::browserName();
+
+        if (! empty($browsers['allow']) && ! in_array((string) $browserName, (array) $browsers['allow'])) {
             return true;
         }
 
-        if (in_array((string) $this->parser->browser(), (array) $browsers['block'])) {
+        if (in_array((string) $browserName, (array) $browsers['block'])) {
             return true;
         }
 
@@ -93,11 +87,13 @@ class Agent extends Middleware
             return false;
         }
 
-        if (! empty($platforms['allow']) && ! in_array((string) $this->parser->platform(), (array) $platforms['allow'])) {
+        $platformName = Browser::platformName();
+
+        if (! empty($platforms['allow']) && ! in_array((string) $platformName, (array) $platforms['allow'])) {
             return true;
         }
 
-        if (in_array((string) $this->parser->platform(), (array) $platforms['block'])) {
+        if (in_array((string) $platformName, (array) $platforms['block'])) {
             return true;
         }
 
@@ -119,7 +115,7 @@ class Agent extends Middleware
 
             $function = 'is' . ucfirst($allow);
 
-            if ($this->parser->$function()) {
+            if (method_exists(Browser::class, $function) && Browser::$function()) {
                 continue;
             }
 
@@ -133,32 +129,7 @@ class Agent extends Middleware
 
             $function = 'is' . ucfirst($block);
 
-            if (! $this->parser->$function()) {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    protected function isProperty()
-    {
-        if (! $agents = config('firewall.middleware.' . $this->middleware . '.properties')) {
-            return false;
-        }
-
-        foreach ((array) $agents['allow'] as $allow) {
-            if ($this->parser->is((string) $allow)) {
-                continue;
-            }
-
-            return true;
-        }
-
-        foreach ((array) $agents['block'] as $block) {
-            if (! $this->parser->is((string) $block)) {
+            if (method_exists(Browser::class, $function) && !Browser::$function()) {
                 continue;
             }
 
