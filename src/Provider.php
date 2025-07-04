@@ -51,7 +51,7 @@ class Provider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/Config/firewall.php', 'firewall');
 
-        $this->app->register(\hisorange\BrowserDetect\ServiceProvider::class);
+        $this->app->register(\Jenssegers\Agent\AgentServiceProvider::class);
     }
 
     /**
