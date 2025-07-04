@@ -4,7 +4,7 @@ namespace Akaunting\Firewall\Middleware;
 
 use Akaunting\Firewall\Abstracts\Middleware;
 use Akaunting\Firewall\Events\AttackDetected;
-use Jenssegers\Agent\Agent;
+use Asika\Agent\Agent;
 
 class Bot extends Middleware
 {
